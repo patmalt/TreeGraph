@@ -19,7 +19,7 @@ struct NodeView: View {
                 .frame(width: 60, height: 60, alignment: .center)
             Text("\(node.name ?? "No name")").foregroundColor(.white).padding()
         }
-        .onTapGesture {
+        .onTapGesture(count: /*@START_MENU_TOKEN@*/1/*@END_MENU_TOKEN@*/, perform: {
             withAnimation {
                 let child = Node(context: viewContext)
                 child.id = UUID()
@@ -27,7 +27,15 @@ struct NodeView: View {
                 child.parent = node
                 try? viewContext.save()
             }
-        }
+        })
+        .contextMenu(ContextMenu(menuItems: {
+            Button(action: {
+                viewContext.delete(node)
+                try? viewContext.save()
+            }, label: {
+                Label("Delete", systemImage: "trash")
+            })
+        }))
     }
 }
 

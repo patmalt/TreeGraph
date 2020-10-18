@@ -4,10 +4,10 @@
         <attribute name="id" optional="YES" attributeType="UUID" usesScalarValueType="NO"/>
         <attribute name="isRoot" optional="YES" attributeType="Boolean" defaultValueString="NO" usesScalarValueType="YES"/>
         <attribute name="name" optional="YES" attributeType="String"/>
-        <relationship name="children" optional="YES" toMany="YES" deletionRule="Nullify" destinationEntity="Node" inverseName="parent" inverseEntity="Node"/>
+        <relationship name="children" optional="YES" toMany="YES" deletionRule="Cascade" destinationEntity="Node" inverseName="parent" inverseEntity="Node"/>
         <relationship name="parent" optional="YES" maxCount="1" deletionRule="Nullify" destinationEntity="Node" inverseName="children" inverseEntity="Node"/>
     </entity>
     <elements>
-        <element name="Node" positionX="-63" positionY="-18" width="128" height="28"/>
+        <element name="Node" positionX="-63" positionY="-18" width="128" height="118"/>
     </elements>
 </model>
