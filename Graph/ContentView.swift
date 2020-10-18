@@ -10,68 +10,61 @@ import CoreData
 
 struct ContentView: View {
     @Environment(\.managedObjectContext) private var viewContext
-
+    
     @FetchRequest(
-        sortDescriptors: [NSSortDescriptor(keyPath: \Item.timestamp, ascending: true)],
-        animation: .default)
-    private var items: FetchedResults<Item>
-
+        entity: Node.entity(),
+        sortDescriptors: [],
+        predicate: NSPredicate(format: "isRoot == YES"),
+        animation: .default
+    )
+    private var nodes: FetchedResults<Node>
+    
     var body: some View {
-        List {
-            ForEach(items) { item in
-                Text("Item at \(item.timestamp!, formatter: itemFormatter)")
-            }
-            .onDelete(perform: deleteItems)
-        }
-        .toolbar {
-            #if os(iOS)
-            EditButton()
-            #endif
-
-            Button(action: addItem) {
-                Label("Add Item", systemImage: "plus")
-            }
-        }
-    }
-
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
+        NavigationView {
+            if let root = nodes.first {
+                ScrollView([.horizontal, .vertical], showsIndicators: false) {
+                    TreeView(root: root, viewContext: viewContext)
+                }
+                .navigationBarItems(
+                    leading: Button(action: restart) { Label("Restart", systemImage: "restart.circle") }
+                )
+            } else {
+                VStack {
+                    Button(
+                        action: newRoot,
+                        label: {
+                            Label("New", systemImage: "plus")
+                        }
+                    )
+                }
+                .navigationBarItems(leading: EmptyView(), trailing: EmptyView())
             }
         }
     }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            offsets.map { items[$0] }.forEach(viewContext.delete)
-
-            do {
-                try viewContext.save()
-            } catch {
-                // Replace this implementation with code to handle the error appropriately.
-                // fatalError() causes the application to generate a crash log and terminate. You should not use this function in a shipping application, although it may be useful during development.
-                let nsError = error as NSError
-                fatalError("Unresolved error \(nsError), \(nsError.userInfo)")
-            }
-        }
+    
+    private func newRoot() {
+        let root = Node(context: viewContext)
+        root.id = UUID()
+        root.name = "Root"
+        root.isRoot = true
+        try? viewContext.save()
+    }
+    
+    private func restart() {
+        let request = NSBatchDeleteRequest(fetchRequest: Node.fetchRequest())
+        request.resultType = .resultTypeObjectIDs
+        guard
+            let result = try? viewContext.execute(request),
+            let deleteResult = result as? NSBatchDeleteResult,
+            let ids = deleteResult.result as? [NSManagedObjectID]
+        else { return }
+        let changes = [NSDeletedObjectsKey: ids]
+        NSManagedObjectContext.mergeChanges(
+            fromRemoteContextSave: changes,
+            into: [viewContext]
+        )
     }
 }
-
-private let itemFormatter: DateFormatter = {
-    let formatter = DateFormatter()
-    formatter.dateStyle = .short
-    formatter.timeStyle = .medium
-    return formatter
-}()
 
 struct ContentView_Previews: PreviewProvider {
     static var previews: some View {

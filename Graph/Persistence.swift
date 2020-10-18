@@ -13,10 +13,22 @@ struct PersistenceController {
     static var preview: PersistenceController = {
         let result = PersistenceController(inMemory: true)
         let viewContext = result.container.viewContext
-        for _ in 0..<10 {
-            let newItem = Item(context: viewContext)
-            newItem.timestamp = Date()
-        }
+        
+        let root = Node(context: viewContext)
+        root.id = UUID()
+        root.name = "Root"
+        root.isRoot = true
+        
+        let child1 = Node(context: viewContext)
+        child1.id = UUID()
+        child1.name = "1"
+        child1.parent = root
+        
+        let child2 = Node(context: viewContext)
+        child2.id = UUID()
+        child2.name = "2"
+        child2.parent = root
+        
         do {
             try viewContext.save()
         } catch {
